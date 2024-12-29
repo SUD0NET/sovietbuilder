@@ -1,41 +1,70 @@
-#! /bin/bash
+#!/bin/bash
 
-## explode immediately if something breaks
+# Exit immediately if a command exits with a non-zero status
 set -e
 
 ###########
-# the minimum filesystem
+# Minimum filesystem setup
 ###########
 
-## make this dir if it's not already there
-mkdir -pv $SOV_DIR
-## base directories without subdirectories
-mkdir -pv $SOV_DIR/{mnt,opt}
-## base directories with subs (efi, etc, usr and var)
-mkdir -pv $SOV_DIR/efi/{loader,EFI/{BOOT,Linux,systemd}}
-mkdir -pv $SOV_DIR/etc/{kernel,pam.d,systemd/{network,system,system-preset},sysupdate.d,udev/rules.d}
-mkdir -pv $SOV_DIR/usr/{bin,etc,include,lib,libexec,local,share,src}
-mkdir -pv $SOV_DIR/var/{cache,lib/{confexts,extensions},local,log,mail,opt,spool,tmp}
-## links for /
-ln -sv usr/bin $SOV_DIR/bin
-ln -sv usr/bin $SOV_DIR/sbin
-ln -sv usr/lib $SOV_DIR/lib
-ln -sv usr/lib $SOV_DIR/lib64
+# Ensure the SOV_DIR variable is set
+if [[ -z "$SOV_DIR" ]]; then
+  echo "Error: SOV_DIR is not set."
+  exit 1
+fi
 
-## links for /usr
-ln -sv lib $SOV_DIR/usr/lib64
-ln -sv bin $SOV_DIR/usr/sbin
+# Create the base directories
+BASE_DIRS=("mnt" "opt")
+SUBDIRS=(
+  "efi/loader"
+  "efi/EFI/BOOT"
+  "efi/EFI/Linux"
+  "efi/EFI/systemd"
+  "etc/kernel"
+  "etc/pam.d"
+  "etc/systemd/network"
+  "etc/systemd/system"
+  "etc/systemd/system-preset"
+  "etc/sysupdate.d"
+  "etc/udev/rules.d"
+  "usr/bin"
+  "usr/etc"
+  "usr/include"
+  "usr/lib"
+  "usr/libexec"
+  "usr/local"
+  "usr/share"
+  "usr/src"
+  "var/cache"
+  "var/lib/confexts"
+  "var/lib/extensions"
+  "var/local"
+  "var/log"
+  "var/mail"
+  "var/opt"
+  "var/spool"
+  "var/tmp"
+)
 
-## links for /var
-#( cd $SOV_DIR/var &&
-#ln -sv /run/lock lock
-#ln -sv /run run )
+# Create directories
+mkdir -pv "$SOV_DIR"
+for dir in "${BASE_DIRS[@]}"; do
+  mkdir -pv "$SOV_DIR/$dir"
+done
 
-## fix perms
-#chmod 0750 $SOV_DIR/root
-#chmod 1777 $SOV_DIR/tmp $SOV_DIR/var/tmp
-#chmod 1777 $SOV_DIR/var/tmp
-#chmod 0555 $SOV_DIR/{dev,proc,run,sys}
+for dir in "${SUBDIRS[@]}"; do
+  mkdir -pv "$SOV_DIR/$dir"
+done
 
-## all done!
-touch 01-complete
+# Create symbolic links
+ln -sv usr/bin "$SOV_DIR/bin"
+ln -sv usr/bin "$SOV_DIR/sbin"
+ln -sv usr/lib "$SOV_DIR/lib"
+ln -sv usr/lib "$SOV_DIR/lib64"
+ln -sv lib "$SOV_DIR/usr/lib64"
+ln -sv bin "$SOV_DIR/usr/sbin"
+
+# Indicate completion
+touch "$SOV_DIR/01-complete"
+
+echo "Filesystem setup complete!"
